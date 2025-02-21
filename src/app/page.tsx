@@ -1,11 +1,14 @@
+import { auth } from "@/auth";
 import { Profile } from "./Profile";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
   return (
-    <div className="min-h-screen font-[family-name:var(--font-geist-sans)]">
-      <main>
-        <Profile />
-      </main>
+    <div>
+      <div className="text-center w-full">
+        {JSON.stringify(session, null, 2)}
+      </div>
+      <Profile />;
     </div>
   );
 }

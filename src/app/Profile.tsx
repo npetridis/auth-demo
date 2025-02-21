@@ -10,10 +10,10 @@ export function Profile() {
   return (
     <>
       <header className="flex justify-between items-center p-4 border-b-2 w-full">
-        <h1 className="text-xl">Web3 Auth Demo</h1>
+        <h1 className="text-xl">Dashboard</h1>
         <ConnectButton />
       </header>
-      <div className="flex justify-center h-screen pt-32">
+      <div className="flex justify-center pt-32">
         <div>
           <h2 className="text-2xl font-bold mb-4">Profile</h2>
           <div>Address: {address}</div>

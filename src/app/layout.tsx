@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
-import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
+import "./globals.css";
 
+import Sidebar from "@/components/Sidebar";
 import { Providers } from "./providers";
 
 const geistSans = Geist({
@@ -31,7 +32,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          <div className="flex min-h-screen font-[family-name:var(--font-geist-sans)]">
+            <Sidebar />
+            <main className="flex-1">{children}</main>
+          </div>
+        </Providers>
       </body>
     </html>
   );
