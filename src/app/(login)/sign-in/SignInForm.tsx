@@ -122,7 +122,7 @@ export default function SignInForm() {
           )}
         </Button>
         <div className="w-full text-right pt-2">
-          <Link href="/sign-up" className="hover:underline ">
+          <Link href="/sign-up" className="hover:underline text-sm">
             or create a new account
           </Link>
         </div>
