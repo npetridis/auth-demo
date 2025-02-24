@@ -15,6 +15,13 @@
       "when": 1740141269088,
       "tag": "0001_overjoyed_tana_nile",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1740408050264,
+      "tag": "0002_eager_cargill",
+      "breakpoints": true
     }
   ]
 }

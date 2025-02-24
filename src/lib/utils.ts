@@ -18,3 +18,8 @@ export async function comparePasswords(
 ) {
   return compare(plainTextPassword, hashedPassword);
 }
+
+export function truncateEthAddress(ethAddress: string) {
+  if (!ethAddress) return "";
+  return `${ethAddress.slice(0, 6)}...${ethAddress.slice(-4)}`;
+}

@@ -4,18 +4,37 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const usersTable = pgTable("users_table", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull(),
-  age: integer("age").notNull(),
-  // Store bcrypt-hashed password (bcrypt hashes are typically 60 chars long).
-  passwordHash: varchar("password_hash", { length: 60 }).notNull(),
-  email: text("email").notNull().unique(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const usersTable = pgTable(
+  "users_table",
+  {
+    id: serial("id").primaryKey(),
+    username: text("username"),
+    age: integer("age"),
+    // Store bcrypt-hashed password (bcrypt hashes are typically 60 chars long).
+    passwordHash: varchar("password_hash", { length: 60 }),
+    email: text("email"),
+    ethereumAddress: varchar("ethereum_address", { length: 42 }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => {
+    return {
+      // Create unique indexes for email and ethereum_address
+      emailUniqueIndex: uniqueIndex("users_email_unique").on(table.email),
+      ethAddressUniqueIndex: uniqueIndex("users_eth_addr_unique").on(
+        table.ethereumAddress
+      ),
+    };
+  }
+);
 
 export const postsTable = pgTable("posts_table", {
   id: serial("id").primaryKey(),

@@ -1,10 +1,17 @@
 "use server";
 
 import { z } from "zod";
-import { signIn as authSignIn } from "@/auth";
 import { redirect } from "next/navigation";
-import { createUser, getUserByEmail } from "@/lib/db/queries";
-import { hashPassword } from "@/lib/utils";
+import {
+  createUser,
+  getUserByEmail,
+  getUserByEthereumAddress,
+} from "@/lib/db/queries";
+import { comparePasswords, hashPassword } from "@/lib/utils";
+import { getIronSession } from "iron-session";
+import { SessionData, sessionOptions } from "@/lib/session/session";
+import { cookies } from "next/headers";
+import { SiweMessage } from "siwe";
 
 export type ActionState = { error?: string };
 
@@ -37,22 +44,23 @@ export async function signUp(prevState: ActionState, formData: FormData) {
   }
 
   const passwordHash = await hashPassword(parserResult.data.password);
-  await createUser({
+  const newUser = await createUser({
     email: parserResult.data.email,
     passwordHash: passwordHash,
     username: parserResult.data.username,
     age: 0,
   });
 
-  try {
-    await authSignIn("Credentials", {
-      email: parserResult.data.email,
-      password: parserResult.data.password,
-      redirect: false,
-    });
-  } catch {
-    return { error: "Failed to create user. Please try again." };
-  }
+  const session = await getIronSession<SessionData>(
+    await cookies(),
+    sessionOptions
+  );
+
+  session.isLoggedIn = true;
+  session.email = newUser.email ?? "";
+  session.username = newUser.username ?? "";
+  session.counter = 0;
+  await session.save();
 
   redirect("/dashboard");
 }
@@ -65,17 +73,46 @@ export async function signIn(prevState: ActionState, formData: FormData) {
     return { error: parserResult.error.errors[0].message };
   }
 
-  try {
-    await authSignIn("credentials", {
-      email: parserResult.data.email,
-      password: parserResult.data.password,
-      redirect: false,
-    });
-  } catch {
+  const user = await getUserByEmail(parserResult.data.email);
+  // if user email doens't exist, return an error
+  if (!user || !user.passwordHash) {
     return { error: "Invalid credentials" };
   }
 
+  // verify user password
+  const isPasswordValid = await comparePasswords(
+    parserResult.data.password,
+    user.passwordHash
+  );
+  // if password is incorrect, return an error
+  if (!isPasswordValid) {
+    return { error: "Invalid credentials" };
+  }
+
+  const session = await getIronSession<SessionData>(
+    await cookies(),
+    sessionOptions
+  );
+
+  session.isLoggedIn = true;
+  session.email = user.email ?? "";
+  session.username = user.username ?? "";
+  session.ethereumAddress = user.ethereumAddress ?? "";
+  session.counter = 0;
+  await session.save();
+
   redirect("/dashboard");
+}
+
+export async function signOut() {
+  const session = await getIronSession<SessionData>(
+    await cookies(),
+    sessionOptions
+  );
+
+  session.destroy();
+
+  redirect("/sign-in");
 }
 
 const ethereumSignInSchema = z.object({
@@ -94,19 +131,50 @@ export async function ethereumSignIn(
     return { error: parserResult.error.errors[0].message };
   }
 
-  console.log("parserResult", parserResult);
+  // 1. Parse the message body
+  const siweMessage = new SiweMessage(JSON.parse(parserResult.data.message));
 
-  try {
-    await authSignIn("ethereum", {
-      message: "parserResult.data.message",
-      signature: "parserResult.data.signature",
-      redirect: false,
-    });
-  } catch (err) {
-    console.log("err", err);
-    return { error: "Authentication Failed" };
+  if (
+    siweMessage.expirationTime &&
+    new Date() > new Date(siweMessage.expirationTime)
+  ) {
+    return null;
   }
-  console.log("egine kati?");
+
+  // 2. Verify the signature
+  const fields = await siweMessage.verify({
+    signature: parserResult.data.signature,
+  });
+
+  if (!fields.success) {
+    return { error: "Signature not verified" };
+  }
+
+  // 3. Check if user exists, if not
+  // create a new user with the ethereum address
+  const user = await getUserByEthereumAddress(siweMessage.address);
+  if (!user) {
+    createUser({
+      email: "",
+      passwordHash: "",
+      username: "",
+      age: 0,
+      ethereumAddress: siweMessage.address,
+    });
+  }
+
+  // 4. Save the user in the session
+  const session = await getIronSession<SessionData>(
+    await cookies(),
+    sessionOptions
+  );
+
+  session.isLoggedIn = true;
+  session.email = "";
+  session.username = "";
+  session.ethereumAddress = siweMessage.address;
+  session.counter = 0;
+  await session.save();
 
   redirect("/dashboard");
 }

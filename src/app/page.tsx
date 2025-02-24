@@ -1,9 +1,8 @@
-import { auth } from "@/auth";
 import { Profile } from "./Profile";
+import { auth } from "@/lib/session/auth";
 
 export default async function Home() {
   const session = await auth();
-  console.log("session", session);
   return (
     <div>
       <div className="text-center w-full">

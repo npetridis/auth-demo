@@ -6,14 +6,13 @@ import {
 } from "@/components/ui/card";
 import { Suspense } from "react";
 import Login from "./SignInForm";
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { auth } from "@/lib/session/auth";
 
 export default async function SignInPage() {
   const session = await auth();
 
-  // TODO: move this to the middleware
-  if (session?.user) {
+  if (session?.isLoggedIn) {
     redirect("/dashboard");
   }
 

@@ -12,7 +12,10 @@ import { db } from "./drizzle";
 /** User queries */
 
 export async function createUser(data: InsertUser) {
-  return await db.insert(usersTable).values(data).returning();
+  const insertedUser = await db.insert(usersTable).values(data).returning();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { passwordHash, ...userWithoutPassword } = insertedUser[0];
+  return userWithoutPassword;
 }
 
 export async function deleteUser(id: SelectUser["id"]) {
@@ -22,9 +25,10 @@ export async function deleteUser(id: SelectUser["id"]) {
 export async function getUserById(id: SelectUser["id"]): Promise<
   Array<{
     id: number;
-    username: string;
-    age: number;
-    email: string;
+    username: string | null;
+    age: number | null;
+    email: string | null;
+    ethereumAddress: string | null;
   }>
 > {
   return db.select().from(usersTable).where(eq(usersTable.id, id));
@@ -33,17 +37,42 @@ export async function getUserById(id: SelectUser["id"]): Promise<
 export async function getUserByEmail(email: SelectUser["email"]): Promise<
   | {
       id: number;
-      username: string;
-      age: number;
-      email: string;
-      passwordHash: string;
+      username: string | null;
+      age: number | null;
+      email: string | null;
+      passwordHash: string | null;
+      ethereumAddress: string | null;
     }
   | undefined
 > {
+  if (!email) return undefined;
   const users = await db
     .select()
     .from(usersTable)
     .where(eq(usersTable.email, email))
+    .limit(1);
+
+  return users.length > 0 ? users[0] : undefined;
+}
+
+export async function getUserByEthereumAddress(
+  ethAddress: SelectUser["ethereumAddress"]
+): Promise<
+  | {
+      id: number;
+      username: string | null;
+      age: number | null;
+      email: string | null;
+      passwordHash: string | null;
+      ethereumAddress: string | null;
+    }
+  | undefined
+> {
+  if (!ethAddress) return undefined;
+  const users = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.ethereumAddress, ethAddress))
     .limit(1);
 
   return users.length > 0 ? users[0] : undefined;
@@ -56,9 +85,10 @@ export async function getUsersWithPostsCount(
   Array<{
     postsCount: number;
     id: number;
-    username: string;
-    age: number;
-    email: string;
+    username: string | null;
+    age: number | null;
+    email: string | null;
+    ethereumAddress: string | null;
   }>
 > {
   return db

@@ -2,8 +2,8 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useActionState } from "react";
-import { ethereumSignIn, signIn } from "../actions";
+import { useActionState, useState } from "react";
+import { signIn, ethereumSignIn } from "../actions";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -11,17 +11,18 @@ import Link from "next/link";
 import { createWalletClient, custom } from "viem";
 import { mainnet } from "viem/chains";
 import { SiweMessage } from "siwe";
-// import { signIn as authSignIn } from "@/auth";
+import { Separator } from "@/components/ui/separator";
 
 export default function SignInForm() {
   const [state, signInAction, pending] = useActionState(signIn, { error: "" });
-  // const [ethState, ethSignInAction, ethPending] = useActionState(ethereumSignIn, { error: "" });
+  const [isLoadingEth, setIsLoadingEth] = useState(false);
+  const [error, setError] = useState();
 
   async function handleEthSignIn() {
     try {
-      // setLoading(true);
+      setIsLoadingEth(true);
 
-      // 1. Connect wallet with viem
+      // Connect wallet with viem
       if (!window.ethereum) {
         alert("No crypto wallet found. Please install it.");
         return;
@@ -38,7 +39,7 @@ export default function SignInForm() {
       }
       const address = addresses[0];
 
-      // 2. Construct SIWE message
+      // Construct SIWE message
       const siweMessage = new SiweMessage({
         domain: window.location.host,
         address,
@@ -50,7 +51,7 @@ export default function SignInForm() {
       });
       const message = siweMessage.prepareMessage();
 
-      // 3. Sign message
+      // Sign message
       const signature = await walletClient.signMessage({
         account: address,
         message,
@@ -60,24 +61,13 @@ export default function SignInForm() {
       const formData = new FormData();
       formData.append("message", JSON.stringify(siweMessage));
       formData.append("signature", signature);
-      const r = await ethereumSignIn({ error: "" }, formData);
-      console.log("result", r);
-      // const res = await authSignIn("ethereum", {
-      //   message: JSON.stringify(siweMessage),
-      //   signature,
-      //   redirect: false,
-      // });
-      // if (res?.error) {
-      //   console.error("SIWE login error:", res.error);
-      // } else {
-      //   window.location.href = "/dashboard";
-      //   // redirect("/dashboard");
-      // }
-    } catch (err) {
+      await ethereumSignIn({ error: "" }, formData);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       console.error("eth sign in error", err);
-      // debugger;
+      setError(err.message);
     } finally {
-      // setLoading(false);
+      setIsLoadingEth(false);
     }
   }
 
@@ -85,8 +75,23 @@ export default function SignInForm() {
     <form action={signInAction}>
       <CardContent className="space-y-4">
         <Button onClick={handleEthSignIn} className="w-full">
-          Sign in with Ethereum
+          {isLoadingEth ? (
+            <>
+              <Loader2 className="animate-spin mr-2 h-4 w-4" />
+              Signing In...
+            </>
+          ) : (
+            "Sign in with Ethereum"
+          )}
         </Button>
+        {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
+        <div className="relative pt-2">
+          <Separator />
+          {/* <span className="absolute transform -translate-y-1/2 bg-background px-2 text-sm text-gray-500 text-center"> */}
+          <span className="absolute left-[45%] px-2 text-sm text-gray-500 text-center -translate-y-1/2 bg-background">
+            OR
+          </span>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
