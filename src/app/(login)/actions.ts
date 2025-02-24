@@ -45,7 +45,7 @@ export async function signUp(prevState: ActionState, formData: FormData) {
   });
 
   try {
-    await authSignIn("credentials", {
+    await authSignIn("Credentials", {
       email: parserResult.data.email,
       password: parserResult.data.password,
       redirect: false,
@@ -74,6 +74,39 @@ export async function signIn(prevState: ActionState, formData: FormData) {
   } catch {
     return { error: "Invalid credentials" };
   }
+
+  redirect("/dashboard");
+}
+
+const ethereumSignInSchema = z.object({
+  message: z.string(),
+  signature: z.string(),
+});
+
+export async function ethereumSignIn(
+  prevState: ActionState,
+  formData: FormData
+) {
+  const parserResult = ethereumSignInSchema.safeParse(
+    Object.fromEntries(formData)
+  );
+  if (!parserResult.success) {
+    return { error: parserResult.error.errors[0].message };
+  }
+
+  console.log("parserResult", parserResult);
+
+  try {
+    await authSignIn("ethereum", {
+      message: "parserResult.data.message",
+      signature: "parserResult.data.signature",
+      redirect: false,
+    });
+  } catch (err) {
+    console.log("err", err);
+    return { error: "Authentication Failed" };
+  }
+  console.log("egine kati?");
 
   redirect("/dashboard");
 }
