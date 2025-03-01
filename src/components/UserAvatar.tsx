@@ -67,7 +67,7 @@ export default async function UserAvatar() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup></DropdownMenuGroup>
         <Link
-          href="https://github.com/npetridis"
+          href="https://github.com/npetridis/auth-demo"
           target="_blank"
           rel="noopener noreferrer"
         >
