@@ -6,6 +6,7 @@ export interface SessionData {
   ethereumAddress: string;
   isLoggedIn: boolean;
   counter: number;
+  userId?: string;
 }
 
 export const defaultSession: SessionData = {

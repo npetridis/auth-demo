@@ -1,17 +1,17 @@
 import {
   integer,
   pgTable,
-  serial,
   text,
   timestamp,
   uniqueIndex,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable(
   "users_table",
   {
-    id: serial("id").primaryKey(),
+    id: uuid("id").defaultRandom().primaryKey(),
     username: text("username"),
     age: integer("age"),
     // Store bcrypt-hashed password (bcrypt hashes are typically 60 chars long).
@@ -37,10 +37,10 @@ export const usersTable = pgTable(
 );
 
 export const postsTable = pgTable("posts_table", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(),
   content: text("content").notNull(),
-  userId: integer("user_id")
+  userId: uuid("user_id")
     .notNull()
     .references(() => usersTable.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),

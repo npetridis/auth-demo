@@ -13,7 +13,7 @@ export default async function SignUpPage() {
   const session = await auth();
 
   if (session?.isLoggedIn) {
-    redirect("/dashboard");
+    redirect("/");
   }
 
   return (

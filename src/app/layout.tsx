@@ -4,8 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 
-import Sidebar from "@/components/Sidebar";
 import { Providers } from "./providers";
+import { Header } from "@/components/Header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,8 +33,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <div className="flex min-h-screen font-[family-name:var(--font-geist-sans)]">
-            <Sidebar />
+          <div className="flex flex-col min-h-screen font-[family-name:var(--font-geist-sans)]">
+            <Header />
             <main className="flex-1">{children}</main>
           </div>
         </Providers>

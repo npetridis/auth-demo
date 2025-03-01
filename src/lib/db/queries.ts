@@ -24,7 +24,7 @@ export async function deleteUser(id: SelectUser["id"]) {
 
 export async function getUserById(id: SelectUser["id"]): Promise<
   Array<{
-    id: number;
+    id: string;
     username: string | null;
     age: number | null;
     email: string | null;
@@ -36,7 +36,7 @@ export async function getUserById(id: SelectUser["id"]): Promise<
 
 export async function getUserByEmail(email: SelectUser["email"]): Promise<
   | {
-      id: number;
+      id: string;
       username: string | null;
       age: number | null;
       email: string | null;
@@ -59,7 +59,7 @@ export async function getUserByEthereumAddress(
   ethAddress: SelectUser["ethereumAddress"]
 ): Promise<
   | {
-      id: number;
+      id: string;
       username: string | null;
       age: number | null;
       email: string | null;
@@ -84,7 +84,7 @@ export async function getUsersWithPostsCount(
 ): Promise<
   Array<{
     postsCount: number;
-    id: number;
+    id: string;
     username: string | null;
     age: number | null;
     email: string | null;
@@ -106,16 +106,71 @@ export async function getUsersWithPostsCount(
 
 /** Post queries */
 
+export async function getPostsByUserId(
+  userId: SelectUser["id"],
+  page = 1,
+  pageSize = 50
+): Promise<
+  Array<{
+    id: string;
+    title: string;
+    content: string;
+  }>
+> {
+  return db
+    .select({
+      id: postsTable.id,
+      title: postsTable.title,
+      content: postsTable.content,
+    })
+    .from(postsTable)
+    .where(eq(postsTable.userId, userId))
+    .orderBy(asc(postsTable.createdAt))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+}
+export async function getPostsCountByUserId(userId: SelectUser["id"]) {
+  const result = await db
+    .select({
+      postsCount: count(postsTable.id),
+    })
+    .from(postsTable)
+    .where(eq(postsTable.userId, userId))
+    .limit(1);
+
+  return result[0]?.postsCount ?? 0;
+}
+
+export async function getPostById(id: SelectPost["id"]): Promise<
+  | {
+      id: string;
+      title: string;
+      content: string;
+    }
+  | undefined
+> {
+  const posts = await db
+    .select({
+      id: postsTable.id,
+      title: postsTable.title,
+      content: postsTable.content,
+    })
+    .from(postsTable)
+    .where(eq(postsTable.id, id));
+
+  return posts.length > 0 ? posts[0] : undefined;
+}
+
 export async function createPost(data: InsertPost) {
   await db.insert(postsTable).values(data);
 }
 
 export async function getPostsForLast24Hours(
   page = 1,
-  pageSize = 5
+  pageSize = 50
 ): Promise<
   Array<{
-    id: number;
+    id: string;
     title: string;
   }>
 > {
@@ -135,9 +190,12 @@ export async function getPostsForLast24Hours(
 
 export async function updatePost(
   id: SelectPost["id"],
-  data: Partial<Omit<SelectPost, "id">>
+  data: { title: SelectPost["title"]; content: SelectPost["content"] }
 ) {
-  await db.update(postsTable).set(data).where(eq(postsTable.id, id));
+  await db
+    .update(postsTable)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(postsTable.id, id));
 }
 
 export async function deletePost(id: SelectPost["id"]) {

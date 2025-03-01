@@ -12,8 +12,11 @@ import { createWalletClient, custom } from "viem";
 import { mainnet } from "viem/chains";
 import { SiweMessage } from "siwe";
 import { Separator } from "@/components/ui/separator";
+import { useSearchParams } from "next/navigation";
 
 export default function SignInForm() {
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const [state, signInAction, pending] = useActionState(signIn, { error: "" });
   const [isLoadingEth, setIsLoadingEth] = useState(false);
   const [error, setError] = useState();
@@ -57,10 +60,11 @@ export default function SignInForm() {
         message,
       });
 
-      // 4. Send to NextAuth Credentials Provider
+      // Send to NextAuth Credentials Provider
       const formData = new FormData();
       formData.append("message", JSON.stringify(siweMessage));
       formData.append("signature", signature);
+      formData.append("redirect", redirect || "");
       await ethereumSignIn({ error: "" }, formData);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -74,7 +78,7 @@ export default function SignInForm() {
   return (
     <form action={signInAction}>
       <CardContent className="space-y-4">
-        <Button onClick={handleEthSignIn} className="w-full">
+        <Button type="button" onClick={handleEthSignIn} className="w-full">
           {isLoadingEth ? (
             <>
               <Loader2 className="animate-spin mr-2 h-4 w-4" />
@@ -88,11 +92,12 @@ export default function SignInForm() {
         <div className="relative pt-2">
           <Separator />
           {/* <span className="absolute transform -translate-y-1/2 bg-background px-2 text-sm text-gray-500 text-center"> */}
-          <span className="absolute left-[45%] px-2 text-sm text-gray-500 text-center -translate-y-1/2 bg-background">
+          <span className="absolute left-[45%] px-2 text-sm text-gray-500 text-center -translate-y-1/2 bg-white">
             OR
           </span>
         </div>
         <div className="space-y-2">
+          <input type="hidden" name="redirect" value={redirect || ""} />
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
@@ -122,7 +127,10 @@ export default function SignInForm() {
           )}
         </Button>
         <div className="w-full text-right pt-2">
-          <Link href="/sign-up" className="hover:underline text-sm">
+          <Link
+            href={{ pathname: "/sign-up", query: { redirect } }}
+            className="hover:underline text-sm"
+          >
             or create a new account
           </Link>
         </div>

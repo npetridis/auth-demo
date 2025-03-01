@@ -8,8 +8,11 @@ import { CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function SignUpForm() {
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const [state, signUpAction, pending] = useActionState(signUp, { error: "" });
   return (
     <form action={signUpAction}>
@@ -25,6 +28,8 @@ export default function SignUpForm() {
           />
         </div>
         <div className="space-y-2">
+          <input type="hidden" name="redirect" value={redirect || ""} />
+
           <Label htmlFor="username">Username</Label>
           <Input
             id="username"
@@ -54,7 +59,7 @@ export default function SignUpForm() {
           )}
         </Button>
         <div className="w-full text-right pt-2">
-          <Link href="/sign-in" className="hover:underline ">
+          <Link href="/sign-in" className="hover:underline text-sm">
             already have an account?
           </Link>
         </div>

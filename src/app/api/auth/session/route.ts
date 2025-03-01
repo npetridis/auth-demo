@@ -1,15 +1,10 @@
 import { getUserByEmail } from "@/lib/db/queries";
-import { sessionOptions } from "@/lib/session";
-import { defaultSession, SessionData } from "@/lib/session/session";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
+import { auth } from "@/lib/session/auth";
+import { defaultSession } from "@/lib/session/session";
 
 // get session
 export async function GET() {
-  const session = await getIronSession<SessionData>(
-    await cookies(),
-    sessionOptions
-  );
+  const session = await auth();
 
   // Might not be necessary to check if the user exists
   const user = await getUserByEmail(session.email);
@@ -26,10 +21,7 @@ export async function GET() {
 
 // delete session
 export async function DELETE() {
-  const session = await getIronSession<SessionData>(
-    await cookies(),
-    sessionOptions
-  );
+  const session = await auth();
 
   session.destroy();
 
