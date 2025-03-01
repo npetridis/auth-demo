@@ -6,10 +6,9 @@ export default async function Home() {
   const session = await auth();
   return (
     <div className="container flex flex-col h-16 items-center justify-self-center">
-      <div className="text-center w-full pt-12">
-        {JSON.stringify(session, null, 2)}
+      <div className="text-2xl py-12">
+        This is the landing page with a description of the repo
       </div>
-      <div>This is the landing page with a description of the repo</div>
 
       <Button asChild>
         <Link href={session?.isLoggedIn ? "/posts" : "/sign-in?redirect=posts"}>
