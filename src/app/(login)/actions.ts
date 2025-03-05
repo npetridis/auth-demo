@@ -67,6 +67,7 @@ export async function signUp(prevState: ActionState, formData: FormData) {
   session.username = newUser.username ?? "";
   session.counter = 0;
   session.userId = newUser.id;
+  session.createdAt = Date.now();
   await session.save();
 
   const redirectTo = formData.get("redirect") as string | null;
@@ -109,6 +110,7 @@ export async function signIn(prevState: ActionState, formData: FormData) {
   session.ethereumAddress = user.ethereumAddress ?? "";
   session.counter = 0;
   session.userId = user.id;
+  session.createdAt = Date.now();
   await session.save();
 
   const redirectTo = formData.get("redirect") as string | null;
@@ -146,11 +148,19 @@ export async function ethereumSignIn(
   // Parse the message body
   const siweMessage = new SiweMessage(JSON.parse(parserResult.data.message));
 
+  // Add 1 day expiration to SIWE message if none exists
+  if (!siweMessage.expirationTime) {
+    const expirationTime = new Date();
+    expirationTime.setDate(expirationTime.getDate() + 1); // 1 day expiration
+    siweMessage.expirationTime = expirationTime.toISOString();
+  }
+  
+  // Check if message has expired
   if (
     siweMessage.expirationTime &&
     new Date() > new Date(siweMessage.expirationTime)
   ) {
-    return null;
+    return { error: "Authentication request has expired. Please try again." };
   }
 
   //  Verify the signature
@@ -194,6 +204,7 @@ export async function ethereumSignIn(
   session.ethereumAddress = siweMessage.address;
   session.counter = 0;
   session.userId = userId;
+  session.createdAt = Date.now();
   await session.save();
 
   const redirectTo = formData.get("redirect") as string | null;

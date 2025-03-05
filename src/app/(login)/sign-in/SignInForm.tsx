@@ -17,6 +17,7 @@ import { useSearchParams } from "next/navigation";
 export default function SignInForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
+  const expired = searchParams.get("expired");
   const [state, signInAction, pending] = useActionState(signIn, { error: "" });
   const [isLoadingEth, setIsLoadingEth] = useState(false);
   const [error, setError] = useState();
@@ -42,7 +43,10 @@ export default function SignInForm() {
       }
       const address = addresses[0];
 
-      // Construct SIWE message
+      // Construct SIWE message with 1-day expiration for Web3 users
+      const expirationTime = new Date();
+      expirationTime.setDate(expirationTime.getDate() + 1); // 1 day expiration
+      
       const siweMessage = new SiweMessage({
         domain: window.location.host,
         address,
@@ -50,7 +54,7 @@ export default function SignInForm() {
         uri: window.location.origin,
         version: "1",
         chainId: await walletClient.getChainId(),
-        // Possibly also a nonce, expirationTime, etc.
+        expirationTime: expirationTime.toISOString(),
       });
       const message = siweMessage.prepareMessage();
 
@@ -78,6 +82,11 @@ export default function SignInForm() {
   return (
     <form action={signInAction}>
       <CardContent className="space-y-4">
+        {expired === "true" && (
+          <div className="text-amber-500 text-sm mb-4 p-2 bg-amber-50 border border-amber-200 rounded-md">
+            Your session has expired. Please sign in again.
+          </div>
+        )}
         <Button type="button" onClick={handleEthSignIn} className="w-full">
           {isLoadingEth ? (
             <>
